@@ -1,0 +1,19 @@
+{
+  "name": "ts-toys",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@pinata/sdk": "^2.1.0",
+    "@types/node": "^20.14.9",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "form-data": "^4.0.0",
+    "ipfs-http-client": "59.0.0",
+    "typescript": "^5.5.2"
+  }
+}
