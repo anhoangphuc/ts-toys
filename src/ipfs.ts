@@ -4,15 +4,9 @@ dotenv.config();
 
 const pinata = new PinataSdk({ pinataJWTKey: process.env.PINATA_JWT_KEY });
 
-const json = {
-    borrower: "Oxdef789..",
-    asset: "DAI",
-    amount: 75.0,
-    collateral: "ETH",
-    collateralAmount: 3.0,
-    duration: 15
-};
-  
+import fs from 'fs';
+
+const json = JSON.parse(fs.readFileSync('src/data/voucher.json', 'utf8'));
 
 (async () => {
     const res = await pinata.pinJSONToIPFS(
