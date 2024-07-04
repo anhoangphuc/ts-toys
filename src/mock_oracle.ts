@@ -438,6 +438,55 @@ const port = 3000;
 
 app.use(bodyParser.json());
 
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <body>
+        <h1>Oracle Price Updater</h1>
+        <form id="oracleForm">
+          <label for="symbol">Symbol:</label>
+          <select id="symbol" name="symbol">
+            <option value="reVND">reVND</option>
+            <option value="reBNB">reBNB</option>
+          </select><br><br>
+          <label for="action">Action:</label>
+          <select id="action" name="action">
+            <option value="set">Set</option>
+            <option value="view">View</option>
+          </select><br><br>
+          <label for="price">Price:</label>
+          <input type="text" id="price" name="price"><br><br>
+          <button type="button" onclick="submitForm()">Submit</button>
+        </form>
+        <div id="response"></div>
+        <script>
+          async function submitForm() {
+            const symbol = document.getElementById('symbol').value;
+            const action = document.getElementById('action').value;
+            const price = document.getElementById('price').value;
+            const responseDiv = document.getElementById('response');
+
+            const response = await fetch('/oracle', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ symbol, action, price })
+            });
+
+            const data = await response.json();
+            responseDiv.innerHTML = JSON.stringify(data);
+
+            if (response.ok) {
+              alert('Action was successful!');
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 app.post('/oracle', async (req, res) => {
   let { action, price, symbol } = req.body;
 
@@ -449,7 +498,6 @@ app.post('/oracle', async (req, res) => {
   }  else {
     return res.status(400).json({ error: "Invalid symbol. Use 'reVND' or 'reBNB'." });
   }
-
 
   if (!['set', 'view'].includes(action)) {
     return res.status(400).json({ error: "Invalid action. Use 'set' or 'view'." });
@@ -467,11 +515,15 @@ app.post('/oracle', async (req, res) => {
     }
   }
 
-  const dataPath = path.join(os.homedir(), ".config/renec/id.json");
-  const data = fs.readFileSync(dataPath);
-  const keypair = Keypair.fromSecretKey(
-    Uint8Array.from(JSON.parse(data.toString()))
-  );
+  const secretKey = [
+    158, 242,  79, 152, 113, 153, 174,  83, 170,  38, 157,
+    203, 109,   0, 196, 114, 215,  79,  41,  92, 100, 205,
+    152, 226, 128, 182, 102,  18, 192,  81,  47,  68, 237,
+    193,  39, 240, 148, 120, 173, 157, 118, 210,   8,  85,
+    101,  88, 151,  13, 172, 171,  37, 198, 186, 182, 125,
+    125, 181,  91, 234, 169, 149, 231,  53, 198
+  ];
+  const keypair =  Keypair.fromSecretKey(Uint8Array.from(secretKey));
   const RPC_URL = Constants.TESTNET_RPC_URL;
   const connection = new Connection(RPC_URL, 'confirmed');
   await connection.requestAirdrop(keypair.publicKey, 2 * LAMPORTS_PER_SOL);
