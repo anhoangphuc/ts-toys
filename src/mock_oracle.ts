@@ -429,44 +429,44 @@ const bnbOraclePrice = new PublicKey("J9m8jCZPhob8qMSKEjmrA81LyQkP4GrjFaMgrwGbcm
 const vndOraclePrice = new PublicKey("FpVfCnfu3aSzVFxJcwELqp1kq4N99eg5fobzhaFUgNdJ");
 
 
-(async () => {
-  const args = process.argv.slice(2);
 
-  console.log(`Usage: npx ts-node src/mock_oracle.ts <symbol> <action> <price>`)
+import express from 'express';
+import bodyParser from 'body-parser';
 
-  const symbol = args[0];
-  const action = args[1];
-  let price = Number(args[2]);
+const app = express();
+const port = 3000;
+
+app.use(bodyParser.json());
+
+app.post('/oracle', async (req, res) => {
+  let { action, price, symbol } = req.body;
 
   let tokenAddr: PublicKey;
-
   if (symbol === 'reVND') {
     tokenAddr = vndOraclePrice;
   } else if (symbol === 'reBNB') {
     tokenAddr = bnbOraclePrice;
-  } else {
-    console.error("Invalid symbol. Use 'reVND' or 'reBNB'.");
-    process.exit(1);
+  }  else {
+    return res.status(400).json({ error: "Invalid symbol. Use 'reVND' or 'reBNB'." });
   }
 
+
   if (!['set', 'view'].includes(action)) {
-    console.error("Invalid action. Use 'set' or 'view'.");
-    process.exit(1);
+    return res.status(400).json({ error: "Invalid action. Use 'set' or 'view'." });
   }
 
   if (action === 'set') {
     if (Number.isNaN(price)) {
-        console.error('You should provide the price');
-        process.exit(1);
+      return res.status(400).json({ error: 'You should provide the price' });
     } else {
-        if (symbol === 'reVND') {
-            price = price * 100;
-        } else {
-            price = price * 1000000;
-        }
+      if (symbol === 'reVND') {
+        price = price * 100;
+      } else {
+        price = price * 1000000;
+      }
     }
   }
-  
+
   const dataPath = path.join(os.homedir(), ".config/renec/id.json");
   const data = fs.readFileSync(dataPath);
   const keypair = Keypair.fromSecretKey(
@@ -481,20 +481,26 @@ const vndOraclePrice = new PublicKey("FpVfCnfu3aSzVFxJcwELqp1kq4N99eg5fobzhaFUgN
     const transaction = new Transaction().add(updateOraclePrice);
     transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     try {
-        transaction.sign(keypair, ...keys);
-        const txHash = await connection.sendRawTransaction(transaction.serialize());
-        console.log(`Transaction hash: ${txHash}`);
+      transaction.sign(keypair, ...keys);
+      const txHash = await connection.sendRawTransaction(transaction.serialize());
+      return res.json({ message: `Transaction hash: ${txHash}` });
     } catch (error) {
-        console.error(error);
-        throw error;
+      console.error(error);
+      return res.status(500).json({ error: (error as any).message });
     }
   } else {
     const oraclePrice = await decodeOraclePrice(connection, tokenAddr);
-    console.log(`Raw data`, oraclePrice);
+    const response = {} as { price: string };
     if (symbol === 'reVND') {
-        console.log(`1 USD = ${oraclePrice.price.toNumber() / 100} VND`);
+      response.price = `1 USD = ${oraclePrice.price.toNumber() / 100} VND`;
     } else {
-        console.log(`1 BNB = ${oraclePrice.price.toNumber() / 1000000} USD`);
+      response.price = `1 BNB = ${oraclePrice.price.toNumber() / 1000000} USD`;
     }
+    return res.json(response);
   }
-})()
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
