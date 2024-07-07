@@ -11,7 +11,7 @@ const pythClient = new PythHttpClient(devnetConnection, new PublicKey("gSbePebfv
     console.log("Data", data);
 
     for (let symbol of data.symbols) {
-        if (symbol && !symbol.includes("USDC")) continue;
+        if (symbol && !symbol.includes("Crypto.ETH/USD")) continue;
         const price = data.productPrice.get(symbol)!;
         // Sample output:
         // Crypto.SRM/USD: $8.68725 ±$0.0131 Status: Trading

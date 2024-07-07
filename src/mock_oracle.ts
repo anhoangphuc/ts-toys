@@ -434,7 +434,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 app.use(bodyParser.json());
 
@@ -465,6 +465,8 @@ app.get('/', (req, res) => {
             const action = document.getElementById('action').value;
             const price = document.getElementById('price').value;
             const responseDiv = document.getElementById('response');
+
+            responseDiv.innerHTML = 'Loading...';
 
             const response = await fetch('/oracle', {
               method: 'POST',
